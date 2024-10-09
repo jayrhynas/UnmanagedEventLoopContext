@@ -1,5 +1,9 @@
 import Foundation
 
+guard let eventLoop = EventLoopCreate() else {
+    fatalError("failed to create event loop")
+}
+
 class Person {
     var name: String
     
@@ -10,22 +14,17 @@ class Person {
 
 let person = Person(name: "Jayson")
 
-guard let loop = EventLoopCreate() else {
-    fatalError("failed to create event loop")
-}
-
-
-EventLoopAddTask(loop, Unmanaged.passRetained(person).toOpaque(), { ptr in
+EventLoopAddTask(eventLoop, Unmanaged.passRetained(person).toOpaque(), { ptr in
     let person = Unmanaged<Person>.fromOpaque(ptr!).takeRetainedValue()
     print("ran task with \(person.name) via C callback")
 })
 
-loop.addTask {
+eventLoop.addTask {
     print("ran task with \(person.name) via Swift closure")
 }
 
-EventLoopCancel(loop)
-EventLoopDestroy(loop)
+EventLoopCancel(eventLoop)
+EventLoopDestroy(eventLoop)
 
 extension EventLoop {
     func addTask(task: @escaping () -> Void) {
